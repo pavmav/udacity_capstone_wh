@@ -60,6 +60,7 @@ def add_item():
         print(sys.exc_info())
         abort(400)
 
+# GET ENTITIES
 @app.route("/warehouses", methods=['GET'])
 def get_warehouses():
     wh_list = [wh.format() for wh in Warehouse.query.all()]
@@ -72,6 +73,34 @@ def get_items():
 
     return jsonify(items_list)
 
+# DELETE ENTITIES
+@app.route("/warehouses/<int:warehouse_id>", methods=['DELETE'])
+def delete_warehouse(warehouse_id):
+
+    warehouse = Warehouse.query.get(warehouse_id)
+
+    if warehouse is None:
+        abort(404)
+
+    warehouse.delete()
+
+    return jsonify({
+        'success': True
+    })
+    
+@app.route("/items/<int:item_id>", methods=['DELETE'])
+def delete_item(item_id):
+
+    item = Item.query.get(item_id)
+
+    if item is None:
+        abort(404)
+
+    item.delete()
+
+    return jsonify({
+        'success': True
+    })    
 
 
 

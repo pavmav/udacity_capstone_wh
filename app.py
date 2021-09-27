@@ -60,6 +60,51 @@ def add_item():
         print(sys.exc_info())
         abort(400)
 
+# PATCH ENTITIES
+@app.route("/warehouses/<int:warehouse_id>", methods=['PATCH'])
+def patch_warehouse(warehouse_id):
+    warehouse = Warehouse.query.get(warehouse_id)
+
+    if warehouse is None:
+        abort(404)
+
+    # get posted json object
+    warehouse_data = request.get_json()
+
+    if 'name' in warehouse_data:
+        warehouse.name = warehouse_data['name']
+
+    if 'overdraft_control' in warehouse_data:
+        warehouse.overdraft_control = warehouse_data['overdraft_control']
+
+    warehouse.update()
+
+    return jsonify({
+        'success': True,
+        'warehouse': warehouse.format()
+    })
+
+@app.route("/items/<int:item_id>", methods=['PATCH'])
+def patch_item(item_id):
+    item = Item.query.get(item_id)
+
+    if item is None:
+        abort(404)
+
+    # get posted json object
+    item_data = request.get_json()
+
+    if 'name' in item_data:
+        item.name = item_data['name']
+
+    item.update()
+
+    return jsonify({
+        'success': True,
+        'item': item.format()
+    })
+    
+
 # GET ENTITIES
 @app.route("/warehouses", methods=['GET'])
 def get_warehouses():

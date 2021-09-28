@@ -239,7 +239,7 @@ def not_found(error):
     }), 404
 
 @app.errorhandler(422)
-def not_found(error):
+def unprocessable(error):
     return jsonify({
         'success': False,
         'error': 422,

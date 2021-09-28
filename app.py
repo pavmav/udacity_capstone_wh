@@ -3,6 +3,7 @@
 from flask import Flask, request, abort, jsonify
 from models import db, Warehouse, Item, BalanceJournal
 from flask_migrate import Migrate
+from auth import AuthError, requires_auth
 import sys
 
 app = Flask(__name__)
@@ -17,7 +18,8 @@ db.create_all()
 
 # HEALTH CHECK
 @app.route("/")
-def hello():
+@requires_auth('get:warehouses') # TODO remove
+def hello(jwt):
     return "Healthy"
 
 # CREATE ENTITIES
@@ -221,7 +223,7 @@ def get_all_balances():
 
 
 
-
+# ERROR HANDLERS
 @app.errorhandler(400)
 def something_went_wrong(error):
     return jsonify({
@@ -254,8 +256,31 @@ def method_not_allowed(error):
         'message': 'Method not allowed'
     }), 405
 
+@app.errorhandler(401)
+def unauthorized(error):
+    return jsonify({
+        'success': False,
+        'error': 401,
+        'message': 'Unauthorized request'
+    }), 401
 
+@app.errorhandler(403)
+def forbidden(error):
+    return jsonify({
+        'success': False,
+        'error': 403,
+        'message': 'Forbidden request'
+    }), 403
 
+@app.errorhandler(AuthError)
+def auth_error(ex):
+    return jsonify({
+    "success": False,
+    "error": ex.status_code,
+    "message": ex.error['description']
+    }),  ex.status_code
+
+# TODO add success = True to GETs
 
 
 if __name__ == "__main__":

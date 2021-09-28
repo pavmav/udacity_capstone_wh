@@ -2,6 +2,7 @@
 
 from flask import Flask, request, abort, jsonify
 from models import db, Warehouse, Item, BalanceJournal
+from flask_migrate import Migrate
 import sys
 
 app = Flask(__name__)
@@ -9,6 +10,8 @@ app = Flask(__name__)
 app.config.from_object('config')
 db.init_app(app)
 app.app_context().push()
+
+migrate = Migrate(app, db)
 
 db.create_all()
 
@@ -103,7 +106,6 @@ def patch_item(item_id):
         'success': True,
         'item': item.format()
     })
-    
 
 # GET ENTITIES
 @app.route("/warehouses", methods=['GET'])
@@ -215,6 +217,44 @@ def get_all_balances():
         balances_list.append(entry)
 
     return jsonify(balances_list)
+
+
+
+
+
+@app.errorhandler(400)
+def something_went_wrong(error):
+    return jsonify({
+        'success': False,
+        'error': 400,
+        'message': 'Bad request'
+    }), 400
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'success': False,
+        'error': 404,
+        'message': 'Resource not found'
+    }), 404
+
+@app.errorhandler(422)
+def not_found(error):
+    return jsonify({
+        'success': False,
+        'error': 422,
+        'message': 'Request is unprocessable'
+    }), 422
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({
+        'success': False,
+        'error': 405,
+        'message': 'Method not allowed'
+    }), 405
+
+
 
 
 

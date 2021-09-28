@@ -37,6 +37,7 @@ class Item(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(120), nullable=False, unique=True)
+    volume = db.Column(db.Integer, nullable=False, default=0)
     balances = db.relationship('BalanceJournal', backref='item')
 
     def __repr__(self) -> str:
@@ -56,7 +57,8 @@ class Item(db.Model):
     def format(self):
         return {
         'id': self.id,
-        'name': self.name
+        'name': self.name,
+        'volume': self.volume
     }
 
 class BalanceJournal(db.Model):

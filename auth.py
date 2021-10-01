@@ -3,11 +3,8 @@ from flask import request
 from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
+from config import AUTH0_DOMAIN, ALGORITHMS, API_AUDIENCE
 import os
-
-AUTH0_DOMAIN = os.getenv('DB_HOST', 'pmav.eu.auth0.com')
-ALGORITHMS = os.getenv('DB_USER', ['RS256'])
-API_AUDIENCE = os.getenv('DB_HOST', 'udacity_capstone')
 
 
 ## AuthError Exception

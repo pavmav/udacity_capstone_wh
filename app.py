@@ -18,9 +18,13 @@ db.create_all()
 
 # HEALTH CHECK
 @app.route("/")
-@requires_auth('get:warehouses') # TODO remove
-def hello(jwt):
-    return "Healthy"
+#@requires_auth('get:warehouses') # TODO remove
+#def hello(jwt):
+def hello():
+    return jsonify({
+        'success': True,
+        'status': 'Healthy'
+        })
 
 # CREATE ENTITIES
 @app.route("/warehouses", methods=['POST'])
@@ -119,13 +123,19 @@ def patch_item(item_id):
 def get_warehouses():
     wh_list = [wh.format() for wh in Warehouse.query.all()]
 
-    return jsonify(wh_list)
+    return jsonify({
+        'success': True,
+        'warehouses': wh_list
+    })
 
 @app.route("/items", methods=['GET'])
 def get_items():
     items_list = [item.format() for item in Item.query.all()]
 
-    return jsonify(items_list)
+    return jsonify({
+        'success': True,
+        'items': items_list
+    })
 
 # DELETE ENTITIES
 @app.route("/warehouses/<int:warehouse_id>", methods=['DELETE'])
@@ -224,7 +234,10 @@ def get_all_balances():
 
         balances_list.append(entry)
 
-    return jsonify(balances_list)
+    return jsonify({
+        'success': True,
+        'balances': balances_list
+    })
 
 
 
@@ -285,8 +298,6 @@ def auth_error(ex):
     "error": ex.status_code,
     "message": ex.error['description']
     }),  ex.status_code
-
-# TODO add success = True to GETs
 
 
 if __name__ == "__main__":

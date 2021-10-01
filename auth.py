@@ -4,8 +4,6 @@ from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
 from config import AUTH0_DOMAIN, ALGORITHMS, API_AUDIENCE
-import os
-
 
 ## AuthError Exception
 '''

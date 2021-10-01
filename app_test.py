@@ -1,11 +1,12 @@
 import os
 import unittest
 import json
-from flask_sqlalchemy import SQLAlchemy
+
+from flask_migrate import heads
 
 from app import app
 from models import db, Warehouse, Item, BalanceJournal
-from config import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME_TEST
+from config import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME_TEST, MANAGER_TOKEN
 
 database_path = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME_TEST}'
 
@@ -25,15 +26,23 @@ class TriviaTestCase(unittest.TestCase):
         # create all tables
         self.db.create_all()
 
+        self.manager_token = MANAGER_TOKEN
+        self.headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.manager_token}'
+        }
+
+
     def tearDown(self):
         """Executed after reach test"""
         pass
 
     def test_check_health(self):
-        res = self.client().get('/')
-        #data = json.loads(res.data)
+        res = self.client().get('/', headers=self.headers)
+        data = json.loads(res.data)
 
-        self.assertEqual(res, b'Healthy')
+        self.assertTrue(data['success'])
+        self.assertEqual(data['status'], 'Healthy')
 
 
 

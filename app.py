@@ -18,8 +18,6 @@ db.create_all()
 
 # HEALTH CHECK
 @app.route("/")
-#@requires_auth('get:warehouses') # TODO remove
-#def hello(jwt):
 def hello():
     return jsonify({
         'success': True,
@@ -28,7 +26,8 @@ def hello():
 
 # CREATE ENTITIES
 @app.route("/warehouses", methods=['POST'])
-def add_warehouse():
+@requires_auth('edit:warehouses')
+def add_warehouse(jwt):
     
     # get posted json object
     wh_data = request.get_json()
@@ -50,7 +49,8 @@ def add_warehouse():
         abort(400)
 
 @app.route("/items", methods=['POST'])
-def add_item():
+@requires_auth('edit:items')
+def add_item(jwt):
     
     # get posted json object
     item_data = request.get_json()
@@ -73,7 +73,8 @@ def add_item():
 
 # PATCH ENTITIES
 @app.route("/warehouses/<int:warehouse_id>", methods=['PATCH'])
-def patch_warehouse(warehouse_id):
+@requires_auth('edit:warehouses')
+def patch_warehouse(jwt, warehouse_id):
     warehouse = Warehouse.query.get(warehouse_id)
 
     if warehouse is None:
@@ -96,7 +97,8 @@ def patch_warehouse(warehouse_id):
     })
 
 @app.route("/items/<int:item_id>", methods=['PATCH'])
-def patch_item(item_id):
+@requires_auth('edit:items')
+def patch_item(jwt, item_id):
     item = Item.query.get(item_id)
 
     if item is None:
@@ -139,7 +141,8 @@ def get_items():
 
 # DELETE ENTITIES
 @app.route("/warehouses/<int:warehouse_id>", methods=['DELETE'])
-def delete_warehouse(warehouse_id):
+@requires_auth('edit:warehouses')
+def delete_warehouse(jwt, warehouse_id):
 
     warehouse = Warehouse.query.get(warehouse_id)
 
@@ -153,7 +156,8 @@ def delete_warehouse(warehouse_id):
     })
     
 @app.route("/items/<int:item_id>", methods=['DELETE'])
-def delete_item(item_id):
+@requires_auth('edit:items')
+def delete_item(jwt, item_id):
 
     item = Item.query.get(item_id)
 
@@ -168,7 +172,8 @@ def delete_item(item_id):
 
 # POST BALANCE OPERATIONS
 @app.route("/balances", methods=['POST'])
-def post_balance_operation():
+@requires_auth('post:balance_operations')
+def post_balance_operation(jwt):
     # get posted json object
     operation_data = request.get_json()
 
@@ -179,6 +184,7 @@ def post_balance_operation():
     if not ('warehouse_id' in operation_data 
             and 'item_id' in operation_data 
             and 'quantity' in operation_data):
+        print(sys.exc_info())
         abort(400)
 
     warehouse_id = operation_data['warehouse_id']

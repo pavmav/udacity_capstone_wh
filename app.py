@@ -54,6 +54,8 @@ def add_item():
     try:
         new_item = Item()
         new_item.name = item_data['name']
+        if 'volume' in item_data:
+            new_item.volume = item_data['volume']
         new_item.insert()
 
         return jsonify({
@@ -101,6 +103,9 @@ def patch_item(item_id):
 
     if 'name' in item_data:
         item.name = item_data['name']
+
+    if 'volume' in item_data:
+        item.volume = item_data['volume']
 
     item.update()
 
@@ -209,11 +214,12 @@ def get_all_balances():
     for entry_raw in balances_list_raw:
         warehouse_dict = entry_raw.warehouse.format()
         item_dict = entry_raw.item.format()
-        
+   
         entry = {
             'warehouse': warehouse_dict,
             'item': item_dict,
-            'quantity': entry_raw.quantity
+            'quantity': entry_raw.quantity,
+            'volume': entry_raw.quantity * item_dict['volume']
         }
 
         balances_list.append(entry)

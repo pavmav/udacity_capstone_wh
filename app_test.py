@@ -10,9 +10,8 @@ from config import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME_TEST, MANAGER_TOKEN, U
 
 database_path = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME_TEST}'
 
-class TriviaTestCase(unittest.TestCase):
-    """This class represents the trivia test case"""
-
+class WarehouseTestCase(unittest.TestCase):
+    
     def setUp(self):
         """Define test variables and initialize app."""
         self.app = app
@@ -41,7 +40,14 @@ class TriviaTestCase(unittest.TestCase):
 
     def tearDown(self):
         """Executed after reach test"""
-        pass
+        for wh in Warehouse.query.all():
+            wh.delete()
+
+        for item in Item.query.all():
+            item.delete()
+
+        for entry in BalanceJournal.query.all():
+            entry.delete()
 
     def test_check_health(self):
         res = self.client().get('/')
@@ -61,6 +67,7 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().post('/warehouses', headers=self.manager_headers, json=new_warehouse_json)
         data = json.loads(res.data)
 
+        self.assertEqual(res.status_code, 200)
         self.assertTrue(data['success'])
 
         new_wh_dict = data['new_wh']
@@ -68,8 +75,54 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertTrue(not new_wh is None)
         self.assertEqual(new_wh.name, warehouse_name)
+        self.assertEqual(new_wh.overdraft_control, True)
 
         new_wh.delete()
+
+    def test_post_warehouse_failure(self):
+        new_warehouse_json = {
+            'overdraft_control': True
+        }
+
+        res = self.client().post('/warehouses', headers=self.manager_headers, json=new_warehouse_json)
+        data = json.loads(res.data)
+
+        self.assertFalse(data['success'])
+        self.assertEqual(res.status_code, 400)
+
+    def test_post_item_success(self):
+        item_name = 'Test item'
+
+        new_item_json = {
+            'name': item_name,
+            'volume': 1
+        }
+
+        res = self.client().post('/items', headers=self.manager_headers, json=new_item_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'])
+
+        new_item_dict = data['new_item']
+        new_item = Item.query.get(new_item_dict['id'])
+
+        self.assertTrue(not new_item is None)
+        self.assertEqual(new_item.name, item_name)
+        self.assertEqual(new_item.volume, 1)
+
+        new_item.delete()
+
+    def test_post_item_failure(self):
+        new_item_json = {
+            'volume': True
+        }
+
+        res = self.client().post('/items', headers=self.manager_headers, json=new_item_json)
+        data = json.loads(res.data)
+
+        self.assertFalse(data['success'])
+        self.assertEqual(res.status_code, 400)
 
 
 

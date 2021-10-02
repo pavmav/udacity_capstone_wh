@@ -4,7 +4,7 @@ import json
 
 from flask_migrate import heads
 
-from app import app
+from app import app, patch_warehouse
 from models import db, Warehouse, Item, BalanceJournal
 from config import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME_TEST, MANAGER_TOKEN, USER_TOKEN
 
@@ -49,6 +49,7 @@ class WarehouseTestCase(unittest.TestCase):
         for entry in BalanceJournal.query.all():
             entry.delete()
 
+    ### ENDPOINTS TESTS
     def test_check_health(self):
         res = self.client().get('/')
         data = json.loads(res.data)
@@ -56,6 +57,7 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertTrue(data['success'])
         self.assertEqual(data['status'], 'Healthy')
 
+    ### CREATE ENTITIES
     def test_post_warehouse_success(self):
         warehouse_name = 'Test warehouse'
 
@@ -124,17 +126,87 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertFalse(data['success'])
         self.assertEqual(res.status_code, 400)
 
+    ### PATCH ENTITIES
+    def test_patch_warehouse_success(self):
+        # create wawrehouse to patch
+        new_wh = Warehouse()
+        new_wh.id = 1
+        new_wh.name = 'Test warehouse'
+        new_wh.overdraft_control = True
+        new_wh.insert()
 
+        patch_warehouse_json = {
+            'name': 'Warehouse 1',
+            'overdraft_control': False
+        }
 
+        res = self.client().patch('/warehouses/1', headers=self.manager_headers, json=patch_warehouse_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'])
+
+        wh = Warehouse.query.get(1)
+
+        self.assertEqual(wh.name, 'Warehouse 1')
+        self.assertEqual(wh.overdraft_control, False)     
+
+    def test_patch_warehouse_failure(self):
+
+        patch_warehouse_json = {
+            'name': 'Warehouse 1',
+            'overdraft_control': False
+        }
+
+        res = self.client().patch('/warehouses/1', headers=self.manager_headers, json=patch_warehouse_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertFalse(data['success'])
+
+    def test_patch_item_success(self):
+        # create wawrehouse to patch
+        new_item = Item()
+        new_item.id = 1
+        new_item.name = 'Test item'
+        new_item.volume = 1
+        new_item.insert()
+
+        patch_item_json = {
+            'name': 'Item 1',
+            'volume': 2
+        }
+
+        res = self.client().patch('/items/1', headers=self.manager_headers, json=patch_item_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'])
+
+        item = Item.query.get(1)
+
+        self.assertEqual(item.name, 'Item 1')
+        self.assertEqual(item.volume, 2)  
+
+    def test_patch_item_failure(self):
+
+        patch_item_json = {
+            'name': 'Item 1',
+            'value': 2
+        }
+
+        res = self.client().patch('/items/1', headers=self.manager_headers, json=patch_item_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertFalse(data['success'])
         
-        
 
 
 
 
 
 
-# Make the tests conveniently executable
 if __name__ == "__main__":
     unittest.main()
 

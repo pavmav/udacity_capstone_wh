@@ -128,7 +128,7 @@ class WarehouseTestCase(unittest.TestCase):
 
     ### PATCH ENTITIES
     def test_patch_warehouse_success(self):
-        # create wawrehouse to patch
+        # create warehouse to patch
         new_wh = Warehouse()
         new_wh.id = 1
         new_wh.name = 'Test warehouse'
@@ -201,6 +201,58 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertFalse(data['success'])
         
+    ### DELETE ENTITIES
+    def test_delete_warehouse_success(self):
+        # create wawrehouse to patch
+        new_wh = Warehouse()
+        new_wh.id = 1
+        new_wh.name = 'Test warehouse'
+        new_wh.overdraft_control = True
+        new_wh.insert()
+
+        res = self.client().delete('/warehouses/1', headers=self.manager_headers)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'])
+
+        wh = Warehouse.query.get(1)
+
+        self.assertIsNone(wh)
+
+    def test_delete_warehouse_failure(self):
+
+        res = self.client().delete('/warehouses/1', headers=self.manager_headers)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertFalse(data['success'])
+
+    def test_delete_item_success(self):
+        # create item to patch
+        new_item = Item()
+        new_item.id = 1
+        new_item.name = 'Test item'
+        new_item.volume = 1
+        new_item.insert()
+
+        res = self.client().delete('/items/1', headers=self.manager_headers)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'])
+
+        item = Item.query.get(1)
+
+        self.assertIsNone(item)
+
+    def test_delete_item_failure(self):
+
+        res = self.client().delete('/items/1', headers=self.manager_headers)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertFalse(data['success'])
 
 
 

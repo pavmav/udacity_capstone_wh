@@ -126,6 +126,80 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertFalse(data['success'])
         self.assertEqual(res.status_code, 400)
 
+    ### GET ENTITIES
+    def test_get_warehouses_success(self):
+        # create warehouse for operation
+        new_wh = Warehouse()
+        new_wh.id = 1
+        new_wh.name = 'Test warehouse'
+        new_wh.overdraft_control = True
+        new_wh.insert()
+
+        model_dict = {
+        "success": True, 
+        "warehouses": [
+                {
+                "id": 1, 
+                "name": "Test warehouse", 
+                "overdraft_control": True
+                }
+            ]
+        }
+
+        res = self.client().get('/warehouses')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data, model_dict)
+
+        new_wh.delete()
+
+    def test_get_warehouses_failure(self):
+
+        res = self.client().put('/warehouses')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 405)
+        self.assertFalse(data['success'])
+
+    def test_get_items_success(self):
+        # create item for operation
+        new_item = Item()
+        new_item.id = 1
+        new_item.name = 'Test item'
+        new_item.volume = 2
+        new_item.insert()
+
+        model_dict = {
+        "success": True, 
+        "items": [
+                {
+                "id": 1, 
+                "name": "Test item", 
+                "volume": 2
+                }
+            ]
+        }
+
+        res = self.client().get('/items')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data, model_dict)
+
+        new_item.delete()
+
+    def test_get_items_failure(self):
+
+        res = self.client().put('/items')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 405)
+        self.assertFalse(data['success'])
+
+
+
+
     ### PATCH ENTITIES
     def test_patch_warehouse_success(self):
         # create warehouse to patch

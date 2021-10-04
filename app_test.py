@@ -165,7 +165,7 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertFalse(data['success'])
 
     def test_patch_item_success(self):
-        # create wawrehouse to patch
+        # create item to patch
         new_item = Item()
         new_item.id = 1
         new_item.name = 'Test item'
@@ -254,8 +254,143 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertFalse(data['success'])
 
+    ### POST BALANCE OPERATION
+    def test_post_balance_operation_success(self):
+        # create warehouse for operation
+        new_wh = Warehouse()
+        new_wh.id = 1
+        new_wh.name = 'Test warehouse'
+        new_wh.overdraft_control = True
+        new_wh.insert()
 
+        # create item for operation
+        new_item = Item()
+        new_item.id = 1
+        new_item.name = 'Test item'
+        new_item.volume = 1
+        new_item.insert()
 
+        # json of operation
+        balance_operation_json = {
+            'warehouse_id': 1,
+            'item_id': 1,
+            'quantity': 10
+        }
+        
+        res = self.client().post('/balances', headers=self.manager_headers, json=balance_operation_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'])
+        self.assertEqual(data['new_balance'], 10)
+
+        res = self.client().post('/balances', headers=self.manager_headers, json=balance_operation_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'])
+        self.assertEqual(data['new_balance'], 20)
+
+        entry = BalanceJournal.query.get((1, 1))
+
+        self.assertEqual(entry.quantity, 20)
+
+        entry.delete()
+        Warehouse.query.get(1).delete()
+        Item.query.get(1).delete()
+
+    def test_post_balance_operation_failure(self):
+        # create warehouse for operation
+        new_wh = Warehouse()
+        new_wh.id = 1
+        new_wh.name = 'Test warehouse'
+        new_wh.overdraft_control = True
+        new_wh.insert()
+
+        # create item for operation
+        new_item = Item()
+        new_item.id = 1
+        new_item.name = 'Test item'
+        new_item.volume = 1
+        new_item.insert()
+
+        # json of operation
+        balance_operation_json = {
+            'warehouse_id': 1,
+            'item_id': 1,
+            'quantity': -10
+        }
+        
+        res = self.client().post('/balances', headers=self.manager_headers, json=balance_operation_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 400)
+        self.assertFalse(data['success'])
+        
+        Warehouse.query.get(1).delete()
+        Item.query.get(1).delete()
+    
+    ### GET BALANCE
+    def test_get_balance_success(self):
+
+        # create warehouse for operation
+        new_wh = Warehouse()
+        new_wh.id = 1
+        new_wh.name = 'Test warehouse'
+        new_wh.overdraft_control = True
+        new_wh.insert()
+
+        # create item for operation
+        new_item = Item()
+        new_item.id = 1
+        new_item.name = 'Test item'
+        new_item.volume = 2
+        new_item.insert()
+
+        # create balance
+        entry = BalanceJournal()
+        entry.warehouse_id = 1
+        entry.item_id = 1
+        entry.quantity = 43
+        entry.insert()
+
+        model_dict = {
+            "balances": [
+                {
+                    "item": {
+                        "id": 1,
+                        "name": "Test item",
+                        "volume": 2
+                    },
+                    "quantity": 43,
+                    "volume": 86,
+                    "warehouse": {
+                        "id": 1,
+                        "name": "Test warehouse",
+                        "overdraft_control": True
+                    }
+                }
+            ],
+            "success": True
+        }
+
+        res = self.client().get('/balances', headers=self.manager_headers)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data, model_dict)
+
+        BalanceJournal.query.get((1,1)).delete()
+        Warehouse.query.get(1).delete()
+        Item.query.get(1).delete()
+
+    def test_get_balance_failure(self):
+
+        res = self.client().put('/balances')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 405)
+        self.assertFalse(data['success'])
 
 
 

@@ -3,6 +3,7 @@ from sqlalchemy.orm import backref
 
 db = SQLAlchemy()
 
+
 class Warehouse(db.Model):
     __tablename__ = 'warehouses'
 
@@ -17,7 +18,7 @@ class Warehouse(db.Model):
     def insert(self):
         db.session.add(self)
         db.session.commit()
-    
+
     def update(self):
         db.session.commit()
 
@@ -27,10 +28,11 @@ class Warehouse(db.Model):
 
     def format(self):
         return {
-        'id': self.id,
-        'name': self.name,
-        'overdraft_control': self.overdraft_control
-    }
+            'id': self.id,
+            'name': self.name,
+            'overdraft_control': self.overdraft_control
+        }
+
 
 class Item(db.Model):
     __tablename__ = 'items'
@@ -46,7 +48,7 @@ class Item(db.Model):
     def insert(self):
         db.session.add(self)
         db.session.commit()
-    
+
     def update(self):
         db.session.commit()
 
@@ -56,16 +58,19 @@ class Item(db.Model):
 
     def format(self):
         return {
-        'id': self.id,
-        'name': self.name,
-        'volume': self.volume
-    }
+            'id': self.id,
+            'name': self.name,
+            'volume': self.volume
+        }
+
 
 class BalanceJournal(db.Model):
     __tablename__ = 'balance_journal'
 
-    warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouses.id'), primary_key=True, nullable=False)
-    item_id = db.Column(db.Integer, db.ForeignKey('items.id'), primary_key=True, nullable=False)
+    warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouses.id'),
+                             primary_key=True, nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('items.id'),
+                        primary_key=True, nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=0)
 
     def __repr__(self) -> str:
@@ -74,7 +79,7 @@ class BalanceJournal(db.Model):
     def insert(self):
         db.session.add(self)
         db.session.commit()
-    
+
     def update(self):
         db.session.commit()
 
@@ -84,9 +89,7 @@ class BalanceJournal(db.Model):
 
     def format(self):
         return {
-        'warehouse': self.warehouse,
-        'item': self.item,
-        'quantity': self.quantity,
-    }
-
-
+            'warehouse': self.warehouse,
+            'item': self.item,
+            'quantity': self.quantity,
+        }

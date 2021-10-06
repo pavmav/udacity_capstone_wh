@@ -17,6 +17,8 @@ migrate = Migrate(app, db)
 db.create_all()
 
 # HEALTH CHECK
+
+
 @app.route("/")
 def hello():
     return jsonify({
@@ -25,10 +27,11 @@ def hello():
         })
 
 # CREATE ENTITIES
+
+
 @app.route("/warehouses", methods=['POST'])
 @requires_auth('edit:warehouses')
 def add_warehouse(jwt):
-    
     # get posted json object
     wh_data = request.get_json()
 
@@ -48,10 +51,10 @@ def add_warehouse(jwt):
         print(sys.exc_info())
         abort(400)
 
+
 @app.route("/items", methods=['POST'])
 @requires_auth('edit:items')
 def add_item(jwt):
-    
     # get posted json object
     item_data = request.get_json()
 
@@ -72,6 +75,8 @@ def add_item(jwt):
         abort(400)
 
 # PATCH ENTITIES
+
+
 @app.route("/warehouses/<int:warehouse_id>", methods=['PATCH'])
 @requires_auth('edit:warehouses')
 def patch_warehouse(jwt, warehouse_id):
@@ -95,6 +100,7 @@ def patch_warehouse(jwt, warehouse_id):
         'success': True,
         'warehouse': warehouse.format()
     })
+
 
 @app.route("/items/<int:item_id>", methods=['PATCH'])
 @requires_auth('edit:items')
@@ -121,6 +127,8 @@ def patch_item(jwt, item_id):
     })
 
 # GET ENTITIES
+
+
 @app.route("/warehouses", methods=['GET'])
 def get_warehouses():
     wh_list = [wh.format() for wh in Warehouse.query.all()]
@@ -129,6 +137,7 @@ def get_warehouses():
         'success': True,
         'warehouses': wh_list
     })
+
 
 @app.route("/items", methods=['GET'])
 def get_items():
@@ -140,6 +149,8 @@ def get_items():
     })
 
 # DELETE ENTITIES
+
+
 @app.route("/warehouses/<int:warehouse_id>", methods=['DELETE'])
 @requires_auth('edit:warehouses')
 def delete_warehouse(jwt, warehouse_id):
@@ -154,7 +165,8 @@ def delete_warehouse(jwt, warehouse_id):
     return jsonify({
         'success': True
     })
-    
+
+
 @app.route("/items/<int:item_id>", methods=['DELETE'])
 @requires_auth('edit:items')
 def delete_item(jwt, item_id):
@@ -168,9 +180,11 @@ def delete_item(jwt, item_id):
 
     return jsonify({
         'success': True
-    })    
+    })
 
 # POST BALANCE OPERATIONS
+
+
 @app.route("/balances", methods=['POST'])
 @requires_auth('post:balance_operations')
 def post_balance_operation(jwt):
@@ -180,10 +194,11 @@ def post_balance_operation(jwt):
     # should have 3 properties:
     #   - warehouse_id: int
     #   - item_id: int
-    #   - quantity: int (positives will be added, negatives will be substracted)
-    if not ('warehouse_id' in operation_data 
-            and 'item_id' in operation_data 
-            and 'quantity' in operation_data):
+    #   - quantity: int (positives will be added, negatives
+    #               will be substracted)
+    if not ('warehouse_id' in operation_data and
+            'item_id' in operation_data and
+            'quantity' in operation_data):
         print(sys.exc_info())
         abort(400)
 
@@ -207,7 +222,7 @@ def post_balance_operation(jwt):
     # check for overdraft
     warehouse = Warehouse.query.get(warehouse_id)
     if bj_entry.quantity < 0 and warehouse.overdraft_control:
-        abort(400)    
+        abort(400)
 
     if new:
         bj_entry.insert()
@@ -220,6 +235,8 @@ def post_balance_operation(jwt):
     })
 
 # GET BALANCES
+
+
 @app.route("/balances", methods=['GET'])
 def get_all_balances():
 
@@ -230,7 +247,7 @@ def get_all_balances():
     for entry_raw in balances_list_raw:
         warehouse_dict = entry_raw.warehouse.format()
         item_dict = entry_raw.item.format()
-   
+
         entry = {
             'warehouse': warehouse_dict,
             'item': item_dict,
@@ -245,10 +262,9 @@ def get_all_balances():
         'balances': balances_list
     })
 
-
-
-
 # ERROR HANDLERS
+
+
 @app.errorhandler(400)
 def something_went_wrong(error):
     return jsonify({
@@ -256,6 +272,7 @@ def something_went_wrong(error):
         'error': 400,
         'message': 'Bad request'
     }), 400
+
 
 @app.errorhandler(404)
 def not_found(error):
@@ -265,6 +282,7 @@ def not_found(error):
         'message': 'Resource not found'
     }), 404
 
+
 @app.errorhandler(422)
 def unprocessable(error):
     return jsonify({
@@ -272,6 +290,7 @@ def unprocessable(error):
         'error': 422,
         'message': 'Request is unprocessable'
     }), 422
+
 
 @app.errorhandler(405)
 def method_not_allowed(error):
@@ -281,6 +300,7 @@ def method_not_allowed(error):
         'message': 'Method not allowed'
     }), 405
 
+
 @app.errorhandler(401)
 def unauthorized(error):
     return jsonify({
@@ -288,6 +308,7 @@ def unauthorized(error):
         'error': 401,
         'message': 'Unauthorized request'
     }), 401
+
 
 @app.errorhandler(403)
 def forbidden(error):
@@ -297,14 +318,15 @@ def forbidden(error):
         'message': 'Forbidden request'
     }), 403
 
+
 @app.errorhandler(AuthError)
 def auth_error(ex):
     return jsonify({
-    "success": False,
-    "error": ex.status_code,
-    "message": ex.error['description']
+        "success": False,
+        "error": ex.status_code,
+        "message": ex.error['description']
     }),  ex.status_code
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0',debug=True)
+    app.run(host='0.0.0.0', debug=True)

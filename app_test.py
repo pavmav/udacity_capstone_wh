@@ -10,17 +10,18 @@ from config import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME_TEST, MANAGER_TOKEN, U
 
 database_path = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME_TEST}'
 
+
 class WarehouseTestCase(unittest.TestCase):
-    
+
     def setUp(self):
         """Define test variables and initialize app."""
         self.app = app
         self.app.config["SQLALCHEMY_DATABASE_URI"] = database_path
         self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
         self.client = self.app.test_client
-        self.database_path = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME_TEST}'
+        self.database_path = database_path
         self.db = db
-        
+
         # binds the app to the current context
         self.db.init_app(app)
         self.app.app_context().push()
@@ -49,7 +50,7 @@ class WarehouseTestCase(unittest.TestCase):
         for entry in BalanceJournal.query.all():
             entry.delete()
 
-    ### ENDPOINTS TESTS
+    # ENDPOINTS TESTS
     def test_check_health(self):
         res = self.client().get('/')
         data = json.loads(res.data)
@@ -57,7 +58,7 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertTrue(data['success'])
         self.assertEqual(data['status'], 'Healthy')
 
-    ### CREATE ENTITIES
+    # CREATE ENTITIES
     def test_post_warehouse_success(self):
         warehouse_name = 'Test warehouse'
 
@@ -66,7 +67,8 @@ class WarehouseTestCase(unittest.TestCase):
             'overdraft_control': True
         }
 
-        res = self.client().post('/warehouses', headers=self.manager_headers, json=new_warehouse_json)
+        res = self.client().post('/warehouses', headers=self.manager_headers,
+                                 json=new_warehouse_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -75,7 +77,7 @@ class WarehouseTestCase(unittest.TestCase):
         new_wh_dict = data['new_wh']
         new_wh = Warehouse.query.get(new_wh_dict['id'])
 
-        self.assertTrue(not new_wh is None)
+        self.assertTrue(new_wh is not None)
         self.assertEqual(new_wh.name, warehouse_name)
         self.assertEqual(new_wh.overdraft_control, True)
 
@@ -86,7 +88,8 @@ class WarehouseTestCase(unittest.TestCase):
             'overdraft_control': True
         }
 
-        res = self.client().post('/warehouses', headers=self.manager_headers, json=new_warehouse_json)
+        res = self.client().post('/warehouses', headers=self.manager_headers,
+                                 json=new_warehouse_json)
         data = json.loads(res.data)
 
         self.assertFalse(data['success'])
@@ -100,7 +103,8 @@ class WarehouseTestCase(unittest.TestCase):
             'volume': 1
         }
 
-        res = self.client().post('/items', headers=self.manager_headers, json=new_item_json)
+        res = self.client().post('/items', headers=self.manager_headers,
+                                 json=new_item_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -109,7 +113,7 @@ class WarehouseTestCase(unittest.TestCase):
         new_item_dict = data['new_item']
         new_item = Item.query.get(new_item_dict['id'])
 
-        self.assertTrue(not new_item is None)
+        self.assertTrue(new_item is not None)
         self.assertEqual(new_item.name, item_name)
         self.assertEqual(new_item.volume, 1)
 
@@ -120,13 +124,14 @@ class WarehouseTestCase(unittest.TestCase):
             'volume': True
         }
 
-        res = self.client().post('/items', headers=self.manager_headers, json=new_item_json)
+        res = self.client().post('/items', headers=self.manager_headers,
+                                 json=new_item_json)
         data = json.loads(res.data)
 
         self.assertFalse(data['success'])
         self.assertEqual(res.status_code, 400)
 
-    ### GET ENTITIES
+    # GET ENTITIES
     def test_get_warehouses_success(self):
         # create warehouse for operation
         new_wh = Warehouse()
@@ -136,14 +141,14 @@ class WarehouseTestCase(unittest.TestCase):
         new_wh.insert()
 
         model_dict = {
-        "success": True, 
-        "warehouses": [
-                {
-                "id": 1, 
-                "name": "Test warehouse", 
-                "overdraft_control": True
-                }
-            ]
+            "success": True,
+            "warehouses": [
+                    {
+                        "id": 1,
+                        "name": "Test warehouse",
+                        "overdraft_control": True
+                    }
+                ]
         }
 
         res = self.client().get('/warehouses')
@@ -171,14 +176,14 @@ class WarehouseTestCase(unittest.TestCase):
         new_item.insert()
 
         model_dict = {
-        "success": True, 
-        "items": [
-                {
-                "id": 1, 
-                "name": "Test item", 
-                "volume": 2
-                }
-            ]
+            "success": True,
+            "items": [
+                    {
+                        "id": 1,
+                        "name": "Test item",
+                        "volume": 2
+                    }
+                ]
         }
 
         res = self.client().get('/items')
@@ -197,7 +202,7 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 405)
         self.assertFalse(data['success'])
 
-    ### PATCH ENTITIES
+    # PATCH ENTITIES
     def test_patch_warehouse_success(self):
         # create warehouse to patch
         new_wh = Warehouse()
@@ -211,7 +216,9 @@ class WarehouseTestCase(unittest.TestCase):
             'overdraft_control': False
         }
 
-        res = self.client().patch('/warehouses/1', headers=self.manager_headers, json=patch_warehouse_json)
+        res = self.client().patch('/warehouses/1',
+                                  headers=self.manager_headers,
+                                  json=patch_warehouse_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -220,7 +227,7 @@ class WarehouseTestCase(unittest.TestCase):
         wh = Warehouse.query.get(1)
 
         self.assertEqual(wh.name, 'Warehouse 1')
-        self.assertEqual(wh.overdraft_control, False)     
+        self.assertEqual(wh.overdraft_control, False)
 
     def test_patch_warehouse_failure(self):
 
@@ -229,7 +236,9 @@ class WarehouseTestCase(unittest.TestCase):
             'overdraft_control': False
         }
 
-        res = self.client().patch('/warehouses/1', headers=self.manager_headers, json=patch_warehouse_json)
+        res = self.client().patch('/warehouses/1',
+                                  headers=self.manager_headers,
+                                  json=patch_warehouse_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
@@ -248,7 +257,8 @@ class WarehouseTestCase(unittest.TestCase):
             'volume': 2
         }
 
-        res = self.client().patch('/items/1', headers=self.manager_headers, json=patch_item_json)
+        res = self.client().patch('/items/1', headers=self.manager_headers,
+                                  json=patch_item_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -257,7 +267,7 @@ class WarehouseTestCase(unittest.TestCase):
         item = Item.query.get(1)
 
         self.assertEqual(item.name, 'Item 1')
-        self.assertEqual(item.volume, 2)  
+        self.assertEqual(item.volume, 2)
 
     def test_patch_item_failure(self):
 
@@ -266,13 +276,14 @@ class WarehouseTestCase(unittest.TestCase):
             'value': 2
         }
 
-        res = self.client().patch('/items/1', headers=self.manager_headers, json=patch_item_json)
+        res = self.client().patch('/items/1', headers=self.manager_headers,
+                                  json=patch_item_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
         self.assertFalse(data['success'])
-        
-    ### DELETE ENTITIES
+
+    # DELETE ENTITIES
     def test_delete_warehouse_success(self):
         # create wawrehouse to patch
         new_wh = Warehouse()
@@ -281,7 +292,8 @@ class WarehouseTestCase(unittest.TestCase):
         new_wh.overdraft_control = True
         new_wh.insert()
 
-        res = self.client().delete('/warehouses/1', headers=self.manager_headers)
+        res = self.client().delete('/warehouses/1',
+                                   headers=self.manager_headers)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -293,7 +305,8 @@ class WarehouseTestCase(unittest.TestCase):
 
     def test_delete_warehouse_failure(self):
 
-        res = self.client().delete('/warehouses/1', headers=self.manager_headers)
+        res = self.client().delete('/warehouses/1',
+                                   headers=self.manager_headers)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
@@ -325,7 +338,7 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertFalse(data['success'])
 
-    ### POST BALANCE OPERATION
+    # POST BALANCE OPERATION
     def test_post_balance_operation_success(self):
         # create warehouse for operation
         new_wh = Warehouse()
@@ -347,15 +360,17 @@ class WarehouseTestCase(unittest.TestCase):
             'item_id': 1,
             'quantity': 10
         }
-        
-        res = self.client().post('/balances', headers=self.manager_headers, json=balance_operation_json)
+
+        res = self.client().post('/balances', headers=self.manager_headers,
+                                 json=balance_operation_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertTrue(data['success'])
         self.assertEqual(data['new_balance'], 10)
 
-        res = self.client().post('/balances', headers=self.manager_headers, json=balance_operation_json)
+        res = self.client().post('/balances', headers=self.manager_headers,
+                                 json=balance_operation_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -391,17 +406,18 @@ class WarehouseTestCase(unittest.TestCase):
             'item_id': 1,
             'quantity': -10
         }
-        
-        res = self.client().post('/balances', headers=self.manager_headers, json=balance_operation_json)
+
+        res = self.client().post('/balances', headers=self.manager_headers,
+                                 json=balance_operation_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 400)
         self.assertFalse(data['success'])
-        
+
         Warehouse.query.get(1).delete()
         Item.query.get(1).delete()
-    
-    ### GET BALANCE
+
+    # GET BALANCE
     def test_get_balance_success(self):
 
         # create warehouse for operation
@@ -451,7 +467,7 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data, model_dict)
 
-        BalanceJournal.query.get((1,1)).delete()
+        BalanceJournal.query.get((1, 1)).delete()
         Warehouse.query.get(1).delete()
         Item.query.get(1).delete()
 
@@ -463,7 +479,7 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 405)
         self.assertFalse(data['success'])
 
-    #### RBAC TESTS
+    # RBAC TESTS
     def test_manager_post_warehouse_success(self):
         warehouse_name = 'Test warehouse'
 
@@ -472,7 +488,8 @@ class WarehouseTestCase(unittest.TestCase):
             'overdraft_control': True
         }
 
-        res = self.client().post('/warehouses', headers=self.manager_headers, json=new_warehouse_json)
+        res = self.client().post('/warehouses', headers=self.manager_headers,
+                                 json=new_warehouse_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -481,7 +498,7 @@ class WarehouseTestCase(unittest.TestCase):
         new_wh_dict = data['new_wh']
         new_wh = Warehouse.query.get(new_wh_dict['id'])
 
-        self.assertTrue(not new_wh is None)
+        self.assertTrue(new_wh is not None)
         self.assertEqual(new_wh.name, warehouse_name)
         self.assertEqual(new_wh.overdraft_control, True)
 
@@ -495,7 +512,8 @@ class WarehouseTestCase(unittest.TestCase):
             'overdraft_control': True
         }
 
-        res = self.client().post('/warehouses', headers=self.user_headers, json=new_warehouse_json)
+        res = self.client().post('/warehouses', headers=self.user_headers,
+                                 json=new_warehouse_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 403)
@@ -522,15 +540,17 @@ class WarehouseTestCase(unittest.TestCase):
             'item_id': 1,
             'quantity': 10
         }
-        
-        res = self.client().post('/balances', headers=self.user_headers, json=balance_operation_json)
+
+        res = self.client().post('/balances', headers=self.user_headers,
+                                 json=balance_operation_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertTrue(data['success'])
         self.assertEqual(data['new_balance'], 10)
 
-        res = self.client().post('/balances', headers=self.user_headers, json=balance_operation_json)
+        res = self.client().post('/balances', headers=self.user_headers,
+                                 json=balance_operation_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -553,7 +573,8 @@ class WarehouseTestCase(unittest.TestCase):
             'volume': 1
         }
 
-        res = self.client().post('/items', headers=self.user_headers, json=new_item_json)
+        res = self.client().post('/items', headers=self.user_headers,
+                                 json=new_item_json)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 403)
@@ -562,5 +583,3 @@ class WarehouseTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-

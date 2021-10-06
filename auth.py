@@ -5,18 +5,20 @@ from jose import jwt
 from urllib.request import urlopen
 from config import AUTH0_DOMAIN, ALGORITHMS, API_AUDIENCE
 
-## AuthError Exception
+# AuthError Exception
 '''
 AuthError Exception
 A standardized way to communicate auth failure modes
 '''
+
+
 class AuthError(Exception):
     def __init__(self, error, status_code):
         self.error = error
         self.status_code = status_code
 
 
-## Auth Header
+# Auth Header
 '''
 attempts to get the header from the request
     raises an AuthError if no header is present
@@ -24,6 +26,8 @@ attempts to split bearer and the token
     raises an AuthError if the header is malformed
 returns the token part of the header
 '''
+
+
 def get_token_auth_header():
     """Obtains the Access Token from the Authorization Header
     """
@@ -63,9 +67,11 @@ def get_token_auth_header():
 
 raises an AuthError if permissions are not included in the payload
     !!NOTE check RBAC settings in Auth0
-raises an AuthError if the requested permission string is not in the payload permissions array
-returns true otherwise
+raises an AuthError if the requested permission string is not in the payload
+permissions array returns true otherwise
 '''
+
+
 def check_permissions(permission, payload):
     if 'permissions' not in payload:
                         raise AuthError({
@@ -90,6 +96,8 @@ decodes the payload from the token
 validates the claims
 returns the decoded payload
 '''
+
+
 def verify_decode_jwt(token):
     try:
         jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
@@ -155,9 +163,12 @@ def verify_decode_jwt(token):
 
 uses the get_token_auth_header method to get the token
 uses the verify_decode_jwt method to decode the jwt
-uses the check_permissions method validate claims and check the requested permission
-returns the decorator which passes the decoded payload to the decorated method
+uses the check_permissions method validate claims and check the
+requested permission returns the decorator which passes the decoded payload to
+the decorated method
 '''
+
+
 def requires_auth(permission=''):
     def requires_auth_decorator(f):
         @wraps(f)
@@ -165,7 +176,7 @@ def requires_auth(permission=''):
             token = get_token_auth_header()
             payload = verify_decode_jwt(token)
             check_permissions(permission, payload)
-            return f(payload, *args, **kwargs) 
+            return f(payload, *args, **kwargs)
 
         return wrapper
     return requires_auth_decorator

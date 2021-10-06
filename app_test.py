@@ -197,9 +197,6 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 405)
         self.assertFalse(data['success'])
 
-
-
-
     ### PATCH ENTITIES
     def test_patch_warehouse_success(self):
         # create warehouse to patch
@@ -466,6 +463,101 @@ class WarehouseTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 405)
         self.assertFalse(data['success'])
 
+    #### RBAC TESTS
+    def test_manager_post_warehouse_success(self):
+        warehouse_name = 'Test warehouse'
+
+        new_warehouse_json = {
+            'name': warehouse_name,
+            'overdraft_control': True
+        }
+
+        res = self.client().post('/warehouses', headers=self.manager_headers, json=new_warehouse_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'])
+
+        new_wh_dict = data['new_wh']
+        new_wh = Warehouse.query.get(new_wh_dict['id'])
+
+        self.assertTrue(not new_wh is None)
+        self.assertEqual(new_wh.name, warehouse_name)
+        self.assertEqual(new_wh.overdraft_control, True)
+
+        new_wh.delete()
+
+    def test_manager_post_warehouse_failure(self):
+        warehouse_name = 'Test warehouse'
+
+        new_warehouse_json = {
+            'name': warehouse_name,
+            'overdraft_control': True
+        }
+
+        res = self.client().post('/warehouses', headers=self.user_headers, json=new_warehouse_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 403)
+        self.assertFalse(data['success'])
+
+    def test_user_post_balance_success(self):
+        # create warehouse for operation
+        new_wh = Warehouse()
+        new_wh.id = 1
+        new_wh.name = 'Test warehouse'
+        new_wh.overdraft_control = True
+        new_wh.insert()
+
+        # create item for operation
+        new_item = Item()
+        new_item.id = 1
+        new_item.name = 'Test item'
+        new_item.volume = 1
+        new_item.insert()
+
+        # json of operation
+        balance_operation_json = {
+            'warehouse_id': 1,
+            'item_id': 1,
+            'quantity': 10
+        }
+        
+        res = self.client().post('/balances', headers=self.user_headers, json=balance_operation_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'])
+        self.assertEqual(data['new_balance'], 10)
+
+        res = self.client().post('/balances', headers=self.user_headers, json=balance_operation_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'])
+        self.assertEqual(data['new_balance'], 20)
+
+        entry = BalanceJournal.query.get((1, 1))
+
+        self.assertEqual(entry.quantity, 20)
+
+        entry.delete()
+        Warehouse.query.get(1).delete()
+        Item.query.get(1).delete()
+
+    def test_user_post_item_failure(self):
+        item_name = 'Test item'
+
+        new_item_json = {
+            'name': item_name,
+            'volume': 1
+        }
+
+        res = self.client().post('/items', headers=self.user_headers, json=new_item_json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 403)
+        self.assertFalse(data['success'])
 
 
 if __name__ == "__main__":

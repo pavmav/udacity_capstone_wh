@@ -91,10 +91,16 @@ validates the claims
 returns the decoded payload
 '''
 def verify_decode_jwt(token):
-    jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
-    jwks = json.loads(jsonurl.read())
-    unverified_header = jwt.get_unverified_header(token)
-    rsa_key = {}
+    try:
+        jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
+        jwks = json.loads(jsonurl.read())
+        unverified_header = jwt.get_unverified_header(token)
+        rsa_key = {}
+    except:
+        raise AuthError({
+                'code': 'invalid_header',
+                'description': 'Incorrect token.'
+            }, 401)
     if 'kid' not in unverified_header:
         raise AuthError({
             'code': 'invalid_header',

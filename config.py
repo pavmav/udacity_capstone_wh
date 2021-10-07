@@ -10,6 +10,10 @@ DB_NAME_TEST = os.getenv('DB_NAME_TEST', 'udacity_wh_test')
 #SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
 SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}')
 
+# fix for Heroku
+if SQLALCHEMY_DATABASE_URI[:9] == 'postgres:':
+    SQLALCHEMY_DATABASE_URI = 'postrgesql' + SQLALCHEMY_DATABASE_URI[8:]
+
 AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
 ALGORITHMS = ['RS256']
 API_AUDIENCE = os.getenv('API_AUDIENCE')

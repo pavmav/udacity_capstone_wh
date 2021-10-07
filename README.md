@@ -2,6 +2,19 @@
 
 This project is a simple backend warehouse engine. Users can create warehouses, items, perform warehouse operations and see the balances of items in warehouses.
 
+Data model consists of Warehouses, Items stored in these warehouses and Balances table storing number of every item in warehouse.
+
+Warehouses have name and "overdraft control" control feature. If overdraft control is set to True, then API will not allow operations, that lead to balance of any item in the warehouse be less than 0.
+
+Items have name and volume feature. Volume is not required for every item. If the volume is set, then API will return total volume of item calculated as quantity*volume.
+
+Both Warehouses and Items have "unique" constraint on names. So, API will not allow to create or edit warehouse or item if there already exists warehouse or item with such name.
+
+API is iupposed to have thee access levels:
+- Authenticated users with role Manager have full access to API: they can create, edit and delete items and warehouses, post balance operations and get all the information.
+- Authenticated users with role User can only post balance operations using existing warehouses and items. And also get any information.
+- Anyone can get all the information about warehouses, items and balances, that does not require authentification.
+
 As a part of the Fullstack Nanodegree, it serves as a capstone for he whole course. 
 
 All backend code follows [PEP8 style guidelines](https://www.python.org/dev/peps/pep-0008/). 
@@ -90,6 +103,7 @@ The API will return three error types when requests fail:
 #### GET /
 - General:
     - Just a simple health check
+- Authentification: does not require authentification.
 - Sample: `curl https://udacity-capstone-warehouse.herokuapp.com/`
 
 ``` 
@@ -102,8 +116,7 @@ The API will return three error types when requests fail:
 - General:
     - Creates a new warehouse using the submitted name and overdraft_control value. Returns the formatted representation of the created warehouse and success value.
 - Authentification: requires token for a user with manager role.
-- Sample: `curl --location --request POST 'https://udacity-capstone-warehouse.herokuapp.com/warehouses' --header 'Authorization: Bearer MANAGER_TOKEN' --header 'Content-Type: application/json' --data-raw '{"name":"Backyard",
-"overdraft_control":true}'`
+- Sample: `curl --location --request POST 'https://udacity-capstone-warehouse.herokuapp.com/warehouses' --header 'Authorization: Bearer MANAGER_TOKEN' --header 'Content-Type: application/json' --data-raw '{"name":"Backyard", "overdraft_control":true}'`
   
 ```
 {
@@ -120,8 +133,7 @@ The API will return three error types when requests fail:
 - General:
     - Creates a new item using the submitted name and volume. Returns the formatted representation of the created item and success value.
 - Authentification: requires token for a user with manager role.
-- Sample: `curl --location --request POST 'https://udacity-capstone-warehouse.herokuapp.com/items' --header 'Authorization: Bearer MANAGER_TOKEN' --header 'Content-Type: application/json' --data-raw '{"name":"Pickled tomatoes 3l jar",
-"volume":3}'`
+- Sample: `curl --location --request POST 'https://udacity-capstone-warehouse.herokuapp.com/items' --header 'Authorization: Bearer MANAGER_TOKEN' --header 'Content-Type: application/json' --data-raw '{"name":"Pickled tomatoes 3l jar", "volume":3}'`
   
 ```
 {
@@ -133,185 +145,179 @@ The API will return three error types when requests fail:
     "success": true
 }
 ```
-
-#### GET /categories/{category_id}/questions
+#### PATCH /warehouses/<int:warehouse_id> (Edit warehouse)
 - General:
-    - Returns a list of questions objects in a category with id=category_id, categories, current category and total number of questions
-- Sample: `curl localhost:5000/categories/1/questions`
-
+    - Assigns the warehouse with id=warehouse_id name and/or overdraft control value based on submitted json. Returns the formatted representation of the patched warehouse and success value.
+- Authentification: requires token for a user with manager role.
+- Sample: `curl --location --request PATCH 'https://udacity-capstone-warehouse.herokuapp.com/warehouses/3' --header 'Authorization: Bearer MANAGER_TOKEN' --header 'Content-Type: application/json' --data-raw '{"overdraft_control": false}'`
+```
+{
+    "warehouse": {
+        "id": 3,
+        "name": "Balcony",
+        "overdraft_control": false
+    },
+    "success": true
+}
+```
+#### PATCH /items/<int:item_id> (Edit item)
+- General:
+    - Assigns the item with id=item_id name and/or volume based on submitted json. Returns the formatted representation of the patched item and success value.
+- Authentification: requires token for a user with manager role.
+- Sample: `curl --location --request PATCH 'https://udacity-capstone-warehouse.herokuapp.com/items/2' --header 'Authorization: Bearer MANAGER_TOKEN' --header 'Content-Type: application/json' --data-raw '{"volume": 3}'`
+```
+{
+    "item": {
+        "id": 2,
+        "name": "pickled zucchini 3 l.",
+        "volume": 3
+    },
+    "success": true
+}
+```
+#### GET /warehouses (List of existing warehouses)
+- General:
+    - Returns list of existing warehouses and success value.
+- Authentification: does not require authentification.
+- Sample: `curl https://udacity-capstone-warehouse.herokuapp.com/warehouses`
 ``` 
 {
-  "categories": {
-    "1": "Science", 
-    "2": "Art", 
-    "3": "Geography", 
-    "4": "History", 
-    "5": "Entertainment", 
-    "6": "Sports"
-  }, 
-  "current_category": null, 
-  "questions": [
-    {
-      "answer": "The Liver", 
-      "category": 1, 
-      "difficulty": 4, 
-      "id": 20, 
-      "question": "What is the heaviest organ in the human body?"
-    }, 
-    {
-      "answer": "Alexander Fleming", 
-      "category": 1, 
-      "difficulty": 3, 
-      "id": 21, 
-      "question": "Who discovered penicillin?"
-    }, 
-    {
-      "answer": "Blood", 
-      "category": 1, 
-      "difficulty": 4, 
-      "id": 22, 
-      "question": "Hematology is a branch of medicine involving the study of what?"
-    }, 
-    {
-      "answer": "Me", 
-      "category": 1, 
-      "difficulty": 1, 
-      "id": 24, 
-      "question": "Who?"
-    }, 
-    {
-      "answer": "Bar!", 
-      "category": 1, 
-      "difficulty": 5, 
-      "id": 30, 
-      "question": "Foo?"
-    }
-  ], 
-  "total_questions": 5
-} 
+    "success": true,
+    "warehouses": [
+        {
+            "id": 1,
+            "name": "garage",
+            "overdraft_control": true
+        },
+        {
+            "id": 2,
+            "name": "Country cabin",
+            "overdraft_control": false
+        },
+        {
+            "id": 3,
+            "name": "Balcony",
+            "overdraft_control": true
+        },
+        {
+            "id": 5,
+            "name": "Backyard",
+            "overdraft_control": true
+        }
+    ]
+}
 ```
-#### POST /quizzes
+#### GET /items (List of existing items)
 - General:
-    - Returns question object based on submitted information: category and IDs of the questions, that already were asked. 
-- Sample: `curl -X POST localhost:5000/quizzes -H "Content-Type: application/json" --data '{"previous_questions":[20], "quiz_category": {"type":"Science", "id":"0"}}'`
+    - Returns list of existing items and success value.
+- Authentification: does not require authentification.
+- Sample: `curl https://udacity-capstone-warehouse.herokuapp.com/items`
+``` 
+{
+    "items": [
+        {
+            "id": 1,
+            "name": "pickled tomatoes 3 l.",
+            "volume": 3
+        },
+        {
+            "id": 2,
+            "name": "pickled zucchini 3 l.",
+            "volume": 3
+        },
+        {
+            "id": 3,
+            "name": "pickled cucumber 2 l.",
+            "volume": 2
+        },
+        {
+            "id": 4,
+            "name": "winter tires",
+            "volume": 0
+        },
+        {
+            "id": 5,
+            "name": "shovel",
+            "volume": 0
+        }
+    ],
+    "success": true
+}
+```
+#### DELETE /warehouses/<int:warehouse_id> (Delete warehouse)
+- General:
+    - Deletes the warehouse with id=warehouse_id and returns the success value.
+- Authentification: requires token for a user with manager role.
+- Sample: `curl --location --request DELETE 'https://udacity-capstone-warehouse.herokuapp.com/warehouses/3' --header 'Authorization: Bearer MANAGER_TOKEN'`
+```
+{
+    "success": true
+}
+```
+#### DELETE /items/<int:item_id> (Delete item)
+- General:
+    - Deletes the item with id=item_id and returns the success value.
+- Authentification: requires token for a user with manager role.
+- Sample: `curl --location --request DELETE 'https://udacity-capstone-warehouse.herokuapp.com/item/2' --header 'Authorization: Bearer MANAGER_TOKEN'`
+```
+{
+    "success": true
+}
+```
+#### POST /balances (Create balance operation)
+- General:
+    - Changes items balance based on the submitted information on how many items should be added or substracted from the balance of ceratin warehouse. Returns the new balance of submitted item in the submitted warehouse and success value.
+- Authentification: requires token for a user with manager or user role.
+- Sample: `curl --location --request POST 'https://udacity-capstone-warehouse.herokuapp.com/balances' --header 'Authorization: Bearer MANAGER_TOKEN' --header 'Content-Type: application/json' --data-raw '{"warehouse_id":3, "item_id":4,"quantity":-5}'`
   
 ```
 {
-  "question": {
-    "answer": "Alexander Fleming", 
-    "category": 1, 
-    "difficulty": 3, 
-    "id": 21, 
-    "question": "Who discovered penicillin?"
-  }
+    "new_balance": 17,
+    "success": true
 }
 ```
-#### GET /questions?page=page_number
+#### GET /balances (List of all balances of items in warehouses)
 - General:
-    - Returns a list of questions objects, categories, current category (default=null) and total number of questions
-    - Results are paginated in groups of 10. Include a request argument to choose page number, starting from 1. 
-- Sample: `curl localhost:5000/questions?page=2`
-
+    - Returns list of all the balances of all the items in all the warehouses.
+- Authentification: does not require authentification.
+- Sample: `curl https://udacity-capstone-warehouse.herokuapp.com/balances`
 ``` 
 {
-  "categories": {
-    "1": "Science", 
-    "2": "Art", 
-    "3": "Geography", 
-    "4": "History", 
-    "5": "Entertainment", 
-    "6": "Sports"
-  }, 
-  "current_category": null, 
-  "questions": [
-    {
-      "answer": "Escher", 
-      "category": 2, 
-      "difficulty": 1, 
-      "id": 16, 
-      "question": "Which Dutch graphic artist\u2013initials M C was a creator of optical illusions?"
-    }, 
-    {
-      "answer": "Mona Lisa", 
-      "category": 2, 
-      "difficulty": 3, 
-      "id": 17, 
-      "question": "La Giaconda is better known as what?"
-    }, 
-    {
-      "answer": "One", 
-      "category": 2, 
-      "difficulty": 4, 
-      "id": 18, 
-      "question": "How many paintings did Van Gogh sell in his lifetime?"
-    }, 
-    {
-      "answer": "Jackson Pollock", 
-      "category": 2, 
-      "difficulty": 2, 
-      "id": 19, 
-      "question": "Which American artist was a pioneer of Abstract Expressionism, and a leading exponent of action painting?"
-    }, 
-    {
-      "answer": "The Liver", 
-      "category": 1, 
-      "difficulty": 4, 
-      "id": 20, 
-      "question": "What is the heaviest organ in the human body?"
-    }, 
-    {
-      "answer": "Alexander Fleming", 
-      "category": 1, 
-      "difficulty": 3, 
-      "id": 21, 
-      "question": "Who discovered penicillin?"
-    }, 
-    {
-      "answer": "Blood", 
-      "category": 1, 
-      "difficulty": 4, 
-      "id": 22, 
-      "question": "Hematology is a branch of medicine involving the study of what?"
-    }, 
-    {
-      "answer": "Scarab", 
-      "category": 4, 
-      "difficulty": 4, 
-      "id": 23, 
-      "question": "Which dung beetle was worshipped by the ancient Egyptians?"
-    }, 
-    {
-      "answer": "Me", 
-      "category": 1, 
-      "difficulty": 1, 
-      "id": 24, 
-      "question": "Who?"
-    }, 
-    {
-      "answer": "Because I can", 
-      "category": 2, 
-      "difficulty": 4, 
-      "id": 28, 
-      "question": "Why?"
-    }
-  ], 
-  "total_questions": 21
-}  
-```
-#### DELETE /questions/{question_id}
-- General:
-    - Deletes the question of the given ID if it exists. 
-- Sample: `curl -X DELETE localhost:5000/questions/29`
-```
-{
-  "success": true
+    "balances": [
+        {
+            "item": {
+                "id": 4,
+                "name": "winter tires",
+                "volume": 1
+            },
+            "quantity": 17,
+            "volume": 17,
+            "warehouse": {
+                "id": 3,
+                "name": "Balcony",
+                "overdraft_control": true
+            }
+        },
+        {
+            "item": {
+                "id": 3,
+                "name": "pickled cucumber 2 l.",
+                "volume": 2
+            },
+            "quantity": 5,
+            "volume": 10,
+            "warehouse": {
+                "id": 2,
+                "name": "Country cabin",
+                "overdraft_control": false
+            }
+        }
+    ],
+    "success": true
 }
 ```
-
-## Deployment N/A
-
 ## Authors
-Udacity team and Pavel Mavrichev
+Pavel Mavrichev
 
 ## Acknowledgements 
-Udacity team and Coach Caryn!
+Udacity team

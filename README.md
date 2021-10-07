@@ -10,7 +10,7 @@ Items have name and volume feature. Volume is not required for every item. If th
 
 Both Warehouses and Items have "unique" constraint on names. So, API will not allow to create or edit warehouse or item if there already exists warehouse or item with such name.
 
-API is iupposed to have thee access levels:
+API is supposed to have thee access levels:
 - Authenticated users with role Manager have full access to API: they can create, edit and delete items and warehouses, post balance operations and get all the information.
 - Authenticated users with role User can only post balance operations using existing warehouses and items. And also get any information.
 - Anyone can get all the information about warehouses, items and balances, that does not require authentification.
